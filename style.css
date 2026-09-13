@@ -7,7 +7,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap");
 
 :root {
-    --bg: #F7F0DF;
+    --bg: #EFF2E6;
     --surface: #FFFFFF;
     --ink: #24301F;
     --ink-soft: #6B7A67;
@@ -47,7 +47,7 @@ body {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(247, 240, 223, 0.92);
+    background: rgba(239, 242, 230, 0.92);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--line);
 }
@@ -80,12 +80,12 @@ body {
 }
 .site-nav a {
     display: block;
-    padding: 7px 16px;
+    padding: 6px 14px;
     border-radius: 999px;
     text-decoration: none;
     color: var(--ink-soft);
     font-weight: 500;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
 }
 .site-nav a:hover { color: var(--ink); background: var(--sage); }
 .site-nav li.current a {
