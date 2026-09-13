@@ -7,7 +7,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap");
 
 :root {
-    --bg: #F4F3EC;
+    --bg: #F7F0DF;
     --surface: #FFFFFF;
     --ink: #24301F;
     --ink-soft: #6B7A67;
@@ -30,8 +30,6 @@
 
 * { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
-
 body {
     margin: 0;
     font-family: 'Gowun Batang', 'Nanum Myeongjo', Georgia, serif;
@@ -49,14 +47,14 @@ body {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(244, 243, 236, 0.92);
+    background: rgba(247, 240, 223, 0.92);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--line);
 }
 .site-header .inner {
     max-width: var(--shell);
     margin: 0 auto;
-    padding: 14px 24px;
+    padding: 8px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -480,6 +478,5 @@ section > h2 + .sub {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    html { scroll-behavior: auto; }
     * { transition: none !important; }
 }
