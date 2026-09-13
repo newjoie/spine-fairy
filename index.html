@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>척추의 요정</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .hero {
+            display: grid;
+            grid-template-columns: 1fr minmax(0, 400px);
+            gap: 48px;
+            align-items: center;
+            padding: 72px 0 24px;
+        }
+        .hero h1 {
+            font-weight: 700;
+            font-size: clamp(2rem, 5vw, 3rem);
+            line-height: 1.35;
+            margin: 0 0 20px;
+            letter-spacing: -0.02em;
+        }
+        .hero .lead { margin-bottom: 28px; }
+        .hero-art {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .hero-art img {
+            width: 100%;
+            border-radius: var(--radius);
+            display: block;
+        }
+        .hero-art img:first-child { grid-column: span 2; }
+        .cta {
+            margin-top: 64px;
+            background: var(--primary);
+            color: #fff;
+            border-radius: var(--radius-lg);
+            padding: 32px 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .cta p { margin: 0; font-size: 1.25rem; font-weight: 700; }
+        .cta .btn { background: #fff; color: var(--primary); }
+        .cta .btn:hover { background: var(--sage); }
+        @media (max-width: 760px) {
+            .hero { grid-template-columns: 1fr; gap: 28px; padding-top: 36px; }
+            .cta { padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="inner">
+            <a class="brand" href="index.html"><img src="images/logo.png" alt="척추의 요정"></a>
+            <nav class="site-nav">
+                <ul>
+                    <li class="current"><a href="index.html">홈</a></li>
+                    <li><a href="about.html">소개</a></li>
+                    <li><a href="posture.html">측정</a></li>
+                    <li><a href="statics.html">통계</a></li>
+                    <li><a href="reels.html">릴스</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="page" style="padding-top:0">
+        <div class="hero">
+            <div>
+                <h1>화면 앞에서 자꾸 말리는 목,<br>요정이 슬쩍 펴드릴게요</h1>
+                <p class="lead">웹캠으로 자세를 지켜보다가 목이 앞으로 나온 채 한참 지나면 조용히 알려드려요. 하루가 끝나면 얼마나 바른 자세로 있었는지도 정리해서 보여드립니다.</p>
+                <div class="btn-row">
+                    <a class="btn" href="posture.html">지금 자세 측정하기</a>
+                    <a class="btn ghost" href="about.html">어떻게 만들었는지 보기</a>
+                </div>
+            </div>
+            <div class="hero-art">
+                <img src="images/image1.png" alt="">
+                <img src="images/image2.png" alt="">
+                <img src="images/image3.png" alt="">
+            </div>
+        </div>
+
+        <section>
+            <h2>요정이 하는 일</h2>
+            <p class="sub">거창한 장비 없이, 이미 책상 위에 있는 웹캠 하나로 합니다.</p>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>자세를 지켜봐요</h3>
+                    <p>카메라 앞에 앉으면 어깨와 머리의 위치를 계속 살펴보면서, 목이 앞으로 나오는 순간을 찾아내요.</p>
+                </div>
+                <div class="card">
+                    <h3>고칠 타이밍에 알려줘요</h3>
+                    <p>잠깐 숙이는 것까지 잡으면 성가시니까, 정해둔 시간 이상 이어질 때만 알려드려요. 시간과 간격은 직접 정할 수 있어요.</p>
+                </div>
+                <div class="card">
+                    <h3>하루를 정리해줘요</h3>
+                    <p>언제 자세가 무너졌는지 시간 순서로 보여주고, 어제와 지난 한 주도 나란히 비교할 수 있어요.</p>
+                </div>
+                <div class="card">
+                    <h3>스트레칭도 챙겨줘요</h3>
+                    <p>굳은 목과 어깨를 풀어주는 짧은 스트레칭을 모아뒀어요. 알림을 받은 김에 한 번씩 해보세요.</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>왜 만들었나요</h2>
+            <p class="sub">노트북과 스마트폰 앞에서 보내는 시간이 길어지면서 거북목을 호소하는 사람도 함께 늘고 있어요. 처음엔 뻐근한 정도지만 방치하면 두통이나 목디스크로 이어지기도 합니다. 척추의 요정은 그 흐름을 조금 일찍 끊어보려고 시작했어요.</p>
+            <div class="card-grid" style="margin-top:8px">
+                <div class="card">
+                    <h3>스스로는 알아차리기 어려워요</h3>
+                    <p>거울에 비친 모습을 보고서야 자세가 무너진 걸 깨닫는 경우가 많아요. 알아차리기 전에 먼저 알려주는 장치가 필요했습니다.</p>
+                </div>
+                <div class="card">
+                    <h3>가끔 하는 운동만으론 부족해요</h3>
+                    <p>필라테스를 시작해도 노트북 앞에 앉아 있는 시간이 훨씬 깁니다. 일상에서 계속 교정해주는 쪽이 효과적이에요.</p>
+                </div>
+                <div class="card">
+                    <h3>설치가 번거로우면 안 써요</h3>
+                    <p>따로 기기를 달거나 옆에 카메라를 두어야 한다면 며칠 만에 그만두게 됩니다. 있는 웹캠 그대로 쓰도록 만들었어요.</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="cta">
+            <p>지금 3분만, 내 자세를 확인해볼까요?</p>
+            <a class="btn" href="posture.html">측정하러 가기</a>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="inner">
+            <span>2024-1 캡스톤디자인 · 국민대학교 경영정보학부</span>
+            <span>척추의 요정 — 거북목을 지켜주는 자세 코칭</span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>측정 · 척추의 요정</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
+    <script src="store.js"></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="inner">
+            <a class="brand" href="index.html"><img src="images/logo.png" alt="척추의 요정"></a>
+            <nav class="site-nav">
+                <ul>
+                    <li><a href="index.html">홈</a></li>
+                    <li><a href="about.html">소개</a></li>
+                    <li class="current"><a href="posture.html">측정</a></li>
+                    <li><a href="statics.html">통계</a></li>
+                    <li><a href="reels.html">릴스</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div id="alert-overlay">
+        <div class="alert-box">
+            <h2>목이 앞으로 나와 있어요</h2>
+            <p id="alert-body"></p>
+            <p class="hint">턱을 살짝 당기고, 화면 상단이 눈높이에 오도록 올려보세요.</p>
+            <button class="btn" onclick="dismissOverlay()">알겠어요</button>
+        </div>
+    </div>
+
+    <main class="page">
+        <div class="page-head">
+            <h1>지금, 내 자세는 어떤가요</h1>
+            <p class="lead">카메라를 켜두면 요정이 자세를 지켜보다가, 목이 앞으로 나온 채로 한참 지나면 조용히 알려드려요. 다른 탭에서 일하는 동안에도 측정은 계속됩니다.</p>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn" id="start-btn" type="button" onclick="init()">측정 시작하기</button>
+            <button class="btn ghost" id="pause-btn" type="button" onclick="togglePause()" disabled>일시정지</button>
+        </div>
+
+        <div class="settings" style="margin-top:20px">
+            <label>목이 앞으로 나온 채로
+                <select id="hold-select">
+                    <option value="10">10초</option>
+                    <option value="20">20초</option>
+                    <option value="30">30초</option>
+                    <option value="60">1분</option>
+                </select>
+                지나면 알려주세요
+            </label>
+            <label>고쳐지지 않으면
+                <select id="interval-select">
+                    <option value="3">3분</option>
+                    <option value="5">5분</option>
+                    <option value="8">8분</option>
+                    <option value="10">10분</option>
+                    <option value="15">15분</option>
+                </select>
+                마다 다시 알려주세요
+            </label>
+        </div>
+
+        <section>
+            <div class="cam-wrap">
+                <div>
+                    <canvas id="canvas"></canvas>
+                    <div id="label-container"></div>
+                </div>
+                <div>
+                    <div class="stat" style="margin-bottom:16px">
+                        <p class="label">현재 상태</p>
+                        <p class="value"><span class="badge" id="current-status">측정 대기 중</span></p>
+                        <p class="note" id="status-duration">지속 시간: 0초</p>
+                    </div>
+                    <div class="card">
+                        <h3>오늘 기록</h3>
+                        <div class="rows" style="margin-top:12px">
+                            <div class="row"><span>총 측정 시간</span><span id="total-time">0초</span></div>
+                            <div class="row"><span>거북목 시간</span><span id="bad-posture-time">0초</span></div>
+                            <div class="row"><span>거북목 비율</span><span id="bad-ratio">0%</span></div>
+                            <div class="row"><span>가장 오래 이어진 거북목</span><span id="longest-bad">0초</span></div>
+                            <div class="row"><span>알림</span><span><span id="alert-count">0</span>회</span></div>
+                        </div>
+                        <p style="margin-top:16px"><a href="statics.html">통계에서 그래프로 보기</a></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="inner">
+            <span>2024-1 캡스톤디자인 · 국민대학교 경영정보학부</span>
+            <span>척추의 요정 — 거북목을 지켜주는 자세 코칭</span>
+        </div>
+    </footer>
+
+    <script type="text/javascript">
+        const MODEL_URL = "https://teachablemachine.withgoogle.com/models/XKictqi54/";
+
+        /* --- 튜닝 상수 ---------------------------------------------------
+         * 2024년 버전은 매 프레임(초당 60회) 추론하고 확률 0.9를 단일 기준으로
+         * 썼다. 자세는 그렇게 빨리 바뀌지 않으므로 샘플링을 낮추고, 경계에서
+         * 판정이 떨리지 않도록 진입/해제 기준을 분리한다. */
+        const SAMPLE_MS = 250;   // 초당 4회 추론
+        const ENTER_BAD = 0.75;  // 이 확률을 넘으면 거북목 진입
+        const EXIT_BAD  = 0.55;  // 이 확률 밑으로 내려와야 해제
+        const SAVE_MS   = 5000;  // 저장 주기
+        const MAX_DT    = 5;     // 탭 전환·절전 구간 방어 (초)
+
+        /* 알림 타이밍은 사용자가 바꿀 수 있다. (설정은 localStorage에 유지) */
+        let settings = PostureStore.getSettings();
+        let ALERT_HOLD = settings.holdSec * 1000;
+        let ALERT_COOL = settings.alertIntervalMin * 60 * 1000;
+
+        let model, webcam, ctx, labelContainer;
+        let running = false, paused = false;
+        let loopTimer = null, saveTimer = null;
+
+        let state = 'UNKNOWN';   // GOOD | BAD | UNKNOWN
+        let stateSince = Date.now();
+        let lastTick = Date.now();
+        let lastAlertAt = 0;
+
+        let dayKey = PostureStore.todayKey();
+        let rec = PostureStore.getDay(dayKey);
+
+        function bindSettings() {
+            const hold = document.getElementById('hold-select');
+            const interval = document.getElementById('interval-select');
+            hold.value = String(settings.holdSec);
+            interval.value = String(settings.alertIntervalMin);
+
+            hold.addEventListener('change', function () {
+                settings = PostureStore.setSettings({ holdSec: Number(hold.value) });
+                ALERT_HOLD = settings.holdSec * 1000;
+            });
+            interval.addEventListener('change', function () {
+                settings = PostureStore.setSettings({ alertIntervalMin: Number(interval.value) });
+                ALERT_COOL = settings.alertIntervalMin * 60 * 1000;
+            });
+        }
+        document.addEventListener('DOMContentLoaded', bindSettings);
+
+        function isBadLabel(name) {
+            return name.indexOf('거북') !== -1;
+        }
+
+        async function init() {
+            const startBtn = document.getElementById('start-btn');
+            startBtn.disabled = true;
+            startBtn.innerText = '불러오는 중...';
+
+            try {
+                model = await tmPose.load(MODEL_URL + "model.json", MODEL_URL + "metadata.json");
+            } catch (e) {
+                alert('모델을 불러오지 못했습니다. 네트워크를 확인해 주세요.');
+                startBtn.disabled = false;
+                startBtn.innerText = '시작';
+                return;
+            }
+
+            const maxPredictions = model.getTotalClasses();
+            const size = 300;
+
+            webcam = new tmPose.Webcam(size, size, true);
+            try {
+                await webcam.setup();
+                await webcam.play();
+            } catch (e) {
+                alert('웹캠을 사용할 수 없습니다. 권한을 확인해 주세요.');
+                startBtn.disabled = false;
+                startBtn.innerText = '시작';
+                return;
+            }
+
+            const canvas = document.getElementById("canvas");
+            canvas.width = size;
+            canvas.height = size;
+            ctx = canvas.getContext("2d");
+
+            labelContainer = document.getElementById("label-container");
+            labelContainer.innerHTML = '';
+            for (let i = 0; i < maxPredictions; i++) {
+                labelContainer.appendChild(document.createElement("div"));
+            }
+
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+
+            running = true;
+            lastTick = Date.now();
+            stateSince = Date.now();
+
+            /* requestAnimationFrame은 탭이 숨겨지면 멈춘다. 백그라운드에서도
+             * 측정이 이어지도록 setInterval을 쓴다. (숨김 시 초당 1회로
+             * 제한되지만 자세 측정에는 충분하다.) */
+            loopTimer = setInterval(tick, SAMPLE_MS);
+            saveTimer = setInterval(persist, SAVE_MS);
+
+            startBtn.innerText = '측정 중';
+            document.getElementById('pause-btn').disabled = false;
+            renderStats();
+        }
+
+        function togglePause() {
+            paused = !paused;
+            document.getElementById('pause-btn').innerText = paused ? '재개' : '일시정지';
+            if (!paused) lastTick = Date.now();
+            if (paused) {
+                document.getElementById('current-status').innerText = '일시정지';
+                document.getElementById('canvas').className = '';
+            }
+        }
+
+        async function tick() {
+            if (!running || paused) return;
+
+            rolloverIfNewDay();
+            webcam.update();
+
+            let pose = null, prediction = [];
+            try {
+                const result = await model.estimatePose(webcam.canvas);
+                pose = result.pose;
+                prediction = await model.predict(result.posenetOutput);
+            } catch (e) {
+                return;
+            }
+
+            let pBad = 0;
+            for (let i = 0; i < prediction.length; i++) {
+                labelContainer.childNodes[i].innerHTML =
+                    prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+                if (isBadLabel(prediction[i].className)) {
+                    pBad = Math.max(pBad, prediction[i].probability);
+                }
+            }
+
+            const detected = !!pose && pose.keypoints.some(function (k) { return k.score > 0.5; });
+
+            /* --- 시간 누적 -------------------------------------------------
+             * 2024년 버전은 매 프레임 "상태 시작 이후 전체 시간"을 더해서
+             * 총 시간이 폭주했다. 직전 틱과의 차이만 더한다. */
+            const now = Date.now();
+            const dt = Math.min((now - lastTick) / 1000, MAX_DT);
+            lastTick = now;
+
+            if (state !== 'UNKNOWN') {
+                rec.total += dt;
+
+                /* 분 단위 버킷. 통계 페이지의 타임라인 그래프가 이 값을 쓴다. */
+                const d = new Date();
+                const mi = d.getHours() * 60 + d.getMinutes();
+                const cell = rec.minutes[mi] || { b: 0, t: 0 };
+                cell.t += dt;
+                if (state === 'BAD') {
+                    rec.bad += dt;
+                    cell.b += dt;
+                }
+                rec.minutes[mi] = cell;
+            }
+
+            /* --- 상태 전이 (히스테리시스) ---------------------------------- */
+            let next;
+            if (!detected) {
+                next = 'UNKNOWN';
+            } else if (state === 'BAD') {
+                next = pBad < EXIT_BAD ? 'GOOD' : 'BAD';
+            } else {
+                next = pBad > ENTER_BAD ? 'BAD' : 'GOOD';
+            }
+
+            if (next !== state) {
+                if (state === 'BAD') {
+                    rec.longestBad = Math.max(rec.longestBad, (now - stateSince) / 1000);
+                }
+                state = next;
+                stateSince = now;
+            }
+
+            /* --- 알림 ------------------------------------------------------
+             * 상태가 바뀔 때마다 즉시 울리던 것을 지속 시간 + 반복 주기 조건으로
+             * 바꿨다. 자료를 보려고 잠깐 숙이는 동작에는 반응하지 않는다. */
+            if (state === 'BAD') {
+                const held = now - stateSince;
+                rec.longestBad = Math.max(rec.longestBad, held / 1000);
+                if (held >= ALERT_HOLD && now - lastAlertAt >= ALERT_COOL) {
+                    fireAlert(Math.round(held / 1000));
+                    lastAlertAt = now;
+                    rec.alerts += 1;
+                }
+            } else {
+                dismissOverlay();
+            }
+
+            drawPose(pose);
+            renderStats();
+        }
+
+        function rolloverIfNewDay() {
+            const k = PostureStore.todayKey();
+            if (k !== dayKey) {
+                PostureStore.setDay(dayKey, rec);
+                dayKey = k;
+                rec = PostureStore.getDay(k);
+            }
+        }
+
+        function renderStats() {
+            const labelMap = { GOOD: '바른 자세', BAD: '거북목', UNKNOWN: '사람이 감지되지 않음' };
+            document.getElementById('current-status').innerText = paused ? '일시정지' : labelMap[state];
+            document.getElementById('status-duration').innerText =
+                '지속 시간: ' + formatTime((Date.now() - stateSince) / 1000);
+            document.getElementById('total-time').innerText = formatTime(rec.total);
+            document.getElementById('bad-posture-time').innerText = formatTime(rec.bad);
+            document.getElementById('bad-ratio').innerText =
+                (rec.total > 0 ? (rec.bad / rec.total * 100).toFixed(1) : '0.0') + '%';
+            document.getElementById('longest-bad').innerText = formatTime(rec.longestBad);
+            document.getElementById('alert-count').innerText = rec.alerts;
+
+            const tone = paused ? '' : (state === 'BAD' ? 'bad' : (state === 'GOOD' ? 'good' : ''));
+            document.getElementById('canvas').className = tone;
+            document.getElementById('current-status').className = ('badge ' + tone).trim();
+        }
+
+        const BASE_TITLE = document.title;
+        let titleTimer = null;
+        let overlayTimer = null;
+
+        function fireAlert(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const text = mins >= 1
+                ? mins + '분 ' + (seconds % 60) + '초째 이어지고 있습니다.'
+                : seconds + '초째 이어지고 있습니다.';
+
+            beep();
+
+            // 1. 페이지 내 오버레이 — 이 탭을 보고 있을 때
+            document.getElementById('alert-body').innerText = text;
+            document.getElementById('alert-overlay').classList.add('show');
+            clearTimeout(overlayTimer);
+            overlayTimer = setTimeout(dismissOverlay, 10000);
+
+            // 2. 브라우저 알림 — 다른 탭·다른 앱을 쓰고 있을 때
+            if ('Notification' in window && Notification.permission === 'granted') {
+                const n = new Notification('척추의 요정', {
+                    body: '거북목 자세가 ' + text + ' 턱을 당기고 화면을 눈높이로 올려보세요.',
+                    tag: 'posture'   // 같은 tag는 덮어써서 알림이 쌓이지 않는다
+                });
+                n.onclick = function () { window.focus(); n.close(); };
+            }
+
+            // 3. 탭 제목 깜빡임 — 알림 권한을 거부한 경우의 대비책
+            startTitleFlash();
+        }
+
+        function startTitleFlash() {
+            if (titleTimer) return;
+            let on = false;
+            titleTimer = setInterval(function () {
+                on = !on;
+                document.title = on ? '⚠️ 거북목!' : BASE_TITLE;
+            }, 900);
+        }
+
+        function stopTitleFlash() {
+            if (!titleTimer) return;
+            clearInterval(titleTimer);
+            titleTimer = null;
+            document.title = BASE_TITLE;
+        }
+
+        function dismissOverlay() {
+            document.getElementById('alert-overlay').classList.remove('show');
+            clearTimeout(overlayTimer);
+            stopTitleFlash();
+        }
+
+        /* 원본이 참조하던 mp3 파일이 없어 재생되지 않았다. 외부 파일 없이
+         * Web Audio로 짧은 알림음을 만든다. */
+        function beep() {
+            try {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                const ac = new AC();
+                const osc = ac.createOscillator();
+                const gain = ac.createGain();
+                osc.connect(gain);
+                gain.connect(ac.destination);
+                osc.frequency.value = 880;
+                gain.gain.setValueAtTime(0.0001, ac.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.18, ac.currentTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.45);
+                osc.start();
+                osc.stop(ac.currentTime + 0.5);
+            } catch (e) { /* 자동재생 차단 등은 무시 */ }
+        }
+
+        function drawPose(pose) {
+            if (!webcam || !webcam.canvas || !ctx) return;
+            ctx.drawImage(webcam.canvas, 0, 0);
+            if (pose) {
+                tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
+                tmPose.drawSkeleton(pose.keypoints, 0.5, ctx);
+            }
+        }
+
+        function persist() {
+            PostureStore.setDay(dayKey, rec);
+        }
+
+        window.addEventListener('beforeunload', function () {
+            if (running) persist();
+        });
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden && running) persist();
+            else lastTick = Date.now();
+        });
+    </script>
+</body>
+</html>

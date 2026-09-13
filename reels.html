@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>릴스 · 척추의 요정</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .notice {
+            background: var(--bad-soft);
+            border-radius: var(--radius);
+            padding: 18px 24px;
+            color: #7A4620;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+        .reel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+        .reel {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .reel img { width: 100%; display: block; }
+        .reel .body { padding: 18px 20px; }
+        .reel h3 { margin: 0 0 6px; font-weight: 700; font-size: 1.02rem; }
+        .reel p { margin: 0; color: var(--ink-soft); font-size: 0.92rem; }
+        .reel:hover { border-color: var(--sage-deep); }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="inner">
+            <a class="brand" href="index.html"><img src="images/logo.png" alt="척추의 요정"></a>
+            <nav class="site-nav">
+                <ul>
+                    <li><a href="index.html">홈</a></li>
+                    <li><a href="about.html">소개</a></li>
+                    <li><a href="posture.html">측정</a></li>
+                    <li><a href="statics.html">통계</a></li>
+                    <li class="current"><a href="reels.html">릴스</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="page">
+        <div class="page-head">
+            <h1>잠깐, 3분 스트레칭 어때요</h1>
+            <p class="lead">거북목이 오래되면 목뿐 아니라 어깨와 허리, 심하면 두통까지 이어질 수 있어요. 알림을 받은 김에 하나만 골라 따라 해보세요.</p>
+        </div>
+
+        <div class="notice">
+            길게 하는 것보다 자주 하는 게 효과적이에요. 한 시간에 한 번, 30초씩만으로도 충분합니다.
+        </div>
+
+        <section>
+            <h2>원하는 스트레칭을 골라보세요</h2>
+            <p class="sub">짧은 영상이라 자리에 앉은 채로 따라 할 수 있어요.</p>
+            <div class="reel-grid">
+                <a class="reel" href="https://youtube.com/shorts/x7vwRvgIZwk?si=GTINnVEGsoLw0R2q" target="_blank" rel="noopener">
+                    <img src="images/reels1.png" alt="">
+                    <div class="body">
+                        <h3>목을 늘려보아요</h3>
+                        <p>고개를 한쪽 어깨로 천천히 기울여 목 옆선을 풀어주는 동작이에요.</p>
+                    </div>
+                </a>
+                <a class="reel" href="https://youtube.com/shorts/x7vwRvgIZwk?si=GTINnVEGsoLw0R2q" target="_blank" rel="noopener">
+                    <img src="images/reels2.png" alt="">
+                    <div class="body">
+                        <h3>어깨를 펴보아요</h3>
+                        <p>앞으로 말린 어깨를 뒤로 열어주면서 가슴 앞쪽을 늘려줘요.</p>
+                    </div>
+                </a>
+                <a class="reel" href="https://youtube.com/shorts/x7vwRvgIZwk?si=GTINnVEGsoLw0R2q" target="_blank" rel="noopener">
+                    <img src="images/reels3.png" alt="">
+                    <div class="body">
+                        <h3>바른 자세로 돌아와요</h3>
+                        <p>턱을 당기고 정수리를 위로 밀어 올리며 목의 위치를 되돌려요.</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="inner">
+            <span>2024-1 캡스톤디자인 · 국민대학교 경영정보학부</span>
+            <span>척추의 요정 — 거북목을 지켜주는 자세 코칭</span>
+        </div>
+    </footer>
+</body>
+</html>

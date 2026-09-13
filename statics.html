@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>통계 · 척추의 요정</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="store.js"></script>
+    <script src="timeline.js"></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="inner">
+            <a class="brand" href="index.html"><img src="images/logo.png" alt="척추의 요정"></a>
+            <nav class="site-nav">
+                <ul>
+                    <li><a href="index.html">홈</a></li>
+                    <li><a href="about.html">소개</a></li>
+                    <li><a href="posture.html">측정</a></li>
+                    <li class="current"><a href="statics.html">통계</a></li>
+                    <li><a href="reels.html">릴스</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="page">
+        <div class="page-head">
+            <h1>오늘 자세는 어땠나요</h1>
+            <p class="lead">측정 페이지에서 기록한 내용을 모아 보여드려요. 측정 중에는 갱신되지 않으니, 자리에서 일어난 뒤에 새로고침하고 보시면 됩니다.</p>
+        </div>
+
+        <div class="stat-grid">
+            <div class="stat">
+                <p class="label">오늘 거북목 시간</p>
+                <p class="value" id="today-bad-posture-time">0초</p>
+            </div>
+            <div class="stat">
+                <p class="label">오늘 거북목 비율</p>
+                <p class="value" id="bad-posture-ratio">0%</p>
+            </div>
+            <div class="stat">
+                <p class="label">어제와 비교</p>
+                <p class="value" id="delta-vs-yesterday">-</p>
+                <p class="note">비율 기준</p>
+            </div>
+        </div>
+
+        <p id="empty-note" class="lead" style="display:none; margin-top:28px">
+            아직 저장된 기록이 없어요. 측정 페이지에서 측정을 시작하면 이곳에 하나씩 쌓입니다.
+        </p>
+
+        <section>
+            <div class="tl-head">
+                <h2>하루 흐름</h2>
+                <div class="tl-toggle">
+                    <button id="tl-time" class="active" onclick="setSummaryMode('time')">시간</button>
+                    <button id="tl-pct" onclick="setSummaryMode('percent')">비율</button>
+                </div>
+            </div>
+            <p class="sub">언제 목이 앞으로 나와 있었는지를 시간 순서대로 보여드려요. 비어 있는 구간은 자리를 비웠거나 측정이 멈춘 시간이에요.</p>
+            <div class="card">
+                <canvas id="timeline"></canvas>
+            </div>
+            <div id="timeline-summary"></div>
+        </section>
+
+        <section>
+            <h2>최근 7일 거북목 시간</h2>
+            <p class="sub">하루 동안 목이 앞으로 나와 있던 시간을 더한 값이에요. 단위는 분입니다.</p>
+            <div class="card"><canvas id="badPostureChart"></canvas></div>
+        </section>
+
+        <section>
+            <h2>최근 7일 거북목 비율</h2>
+            <p class="sub">측정한 시간 대비 거북목이었던 비율이라, 앉아 있던 시간이 날마다 달라도 비교할 수 있어요.</p>
+            <div class="card"><canvas id="postureRatioChart"></canvas></div>
+        </section>
+
+        <section>
+            <h2>일별 기록</h2>
+            <div class="rows" id="history-list"></div>
+        </section>
+
+        <section>
+            <button class="btn ghost" onclick="resetData()">측정 기록 전체 삭제</button>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="inner">
+            <span>2024-1 캡스톤디자인 · 국민대학교 경영정보학부</span>
+            <span>척추의 요정 — 거북목을 지켜주는 자세 코칭</span>
+        </div>
+    </footer>
+
+    <script>
+        /* 2024년 버전은 이 자리에 예시 배열이 하드코딩되어 있어 측정 결과와
+         * 무관한 그래프를 그렸다. 이제 store.js를 통해 실제 값을 읽는다. */
+        const INK = '#6B7A67', LINE = '#E2E0D5';
+        const BAD = '#C4703A', PRIMARY = '#2E4B32';
+
+        const days = PostureStore.lastDays(7);
+        const today = days[days.length - 1].rec;
+        const yesterday = days[days.length - 2].rec;
+        const ratioOf = function (r) { return r.total > 0 ? (r.bad / r.total * 100) : 0; };
+
+        if (!days.some(function (d) { return d.rec.total > 0; })) {
+            document.getElementById('empty-note').style.display = 'block';
+        }
+
+        document.getElementById('today-bad-posture-time').innerText = formatTime(today.bad);
+        document.getElementById('bad-posture-ratio').innerText = ratioOf(today).toFixed(1) + '%';
+
+        const deltaEl = document.getElementById('delta-vs-yesterday');
+        if (yesterday.total > 0 && today.total > 0) {
+            const diff = ratioOf(today) - ratioOf(yesterday);
+            deltaEl.innerText = (diff > 0 ? '+' : '') + diff.toFixed(1) + '%p';
+            deltaEl.style.color = diff > 0 ? BAD : '#6A9A5B';
+        } else {
+            deltaEl.innerText = '비교할 기록 없음';
+            deltaEl.style.fontSize = '1.05rem';
+        }
+
+        const common = {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: INK } },
+                y: { beginAtZero: true, grid: { color: LINE }, ticks: { color: INK } }
+            }
+        };
+        const labels = days.map(function (d) { return d.label; });
+
+        new Chart(document.getElementById('badPostureChart'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: days.map(function (d) { return +(d.rec.bad / 60).toFixed(1); }),
+                    backgroundColor: BAD,
+                    borderRadius: 6,
+                    maxBarThickness: 44
+                }]
+            },
+            options: common
+        });
+
+        new Chart(document.getElementById('postureRatioChart'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: days.map(function (d) { return +ratioOf(d.rec).toFixed(1); }),
+                    borderColor: PRIMARY,
+                    backgroundColor: 'rgba(46,75,50,0.12)',
+                    pointBackgroundColor: PRIMARY,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: Object.assign({}, common, {
+                scales: Object.assign({}, common.scales, {
+                    y: { beginAtZero: true, max: 100, grid: { color: LINE }, ticks: { color: INK } }
+                })
+            })
+        });
+
+        let summaryMode = 'time';
+        function setSummaryMode(mode) {
+            summaryMode = mode;
+            document.getElementById('tl-time').classList.toggle('active', mode === 'time');
+            document.getElementById('tl-pct').classList.toggle('active', mode === 'percent');
+            renderTimeline();
+        }
+        function renderTimeline() {
+            PostureTimeline.draw(document.getElementById('timeline'), today.minutes);
+            PostureTimeline.renderSummary(
+                document.getElementById('timeline-summary'), today.minutes, summaryMode);
+        }
+        renderTimeline();
+        window.addEventListener('resize', renderTimeline);
+
+        const list = document.getElementById('history-list');
+        let rendered = 0;
+        days.slice().reverse().forEach(function (d) {
+            if (d.rec.total <= 0) return;
+            rendered++;
+            const row = document.createElement('div');
+            row.className = 'row';
+            row.innerHTML = '<span>' + d.label + '</span><span>' +
+                formatTime(d.rec.bad) + ' / ' + formatTime(d.rec.total) +
+                ' (' + ratioOf(d.rec).toFixed(1) + '%)</span>';
+            list.appendChild(row);
+        });
+        if (rendered === 0) {
+            list.innerHTML = '<div class="row"><span>기록이 없습니다.</span><span></span></div>';
+        }
+
+        function resetData() {
+            if (confirm('저장된 모든 측정 기록을 삭제합니다. 계속할까요?')) {
+                PostureStore.resetAll();
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
