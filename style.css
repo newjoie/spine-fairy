@@ -71,7 +71,7 @@ body {
     font-weight: 700;
     font-size: 0.92rem;
 }
-.brand img { height: 32px; width: auto; }
+.brand svg { height: 30px; width: auto; display: block; }
 
 .site-nav ul {
     list-style: none;
@@ -143,6 +143,86 @@ section > h2 + .sub {
     margin: 0 0 8px;
 }
 .card p { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
+
+.feature-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: var(--sage);
+    color: var(--primary);
+    margin-bottom: 14px;
+}
+.feature-icon svg { width: 20px; height: 20px; }
+
+/* ---------- 인터뷰 카드 ---------- */
+
+.avatar-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+.interview-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.interview-head .name { margin: 0; font-weight: 700; font-size: 0.98rem; }
+.interview-head .tag { margin: 2px 0 0; color: var(--ink-soft); font-size: 0.84rem; }
+.interview-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+}
+.interview-cols h4 {
+    margin: 0 0 4px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+.interview-cols p { margin: 0; font-size: 0.9rem; color: var(--ink-soft); }
+@media (max-width: 560px) {
+    .interview-cols { grid-template-columns: 1fr; }
+}
+
+/* ---------- 추이 배너 ---------- */
+
+.trend-banner {
+    position: relative;
+    background-color: var(--sage);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='38' viewBox='0 0 44 38'%3E%3Cpolygon points='22,0 44,11 44,29 22,38 0,29 0,11' fill='none' stroke='%232E4B32' stroke-opacity='0.15' stroke-width='1.2'/%3E%3C/svg%3E");
+    border-radius: var(--radius-lg);
+    padding: 40px 36px;
+    overflow: hidden;
+}
+.trend-banner .trend-chart {
+    width: min(320px, 55%);
+    height: auto;
+    float: right;
+    margin: 0 0 16px 20px;
+}
+.trend-banner p {
+    margin: 0;
+    max-width: 46ch;
+    line-height: 1.8;
+}
+@media (max-width: 620px) {
+    .trend-banner .trend-chart { float: none; width: 100%; margin: 0 0 16px; }
+}
 
 .card-grid {
     display: grid;
