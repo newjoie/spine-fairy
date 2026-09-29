@@ -227,6 +227,10 @@ section > h2 + .sub {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 16px;
 }
+.interview-grid { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 640px) {
+    .interview-grid { grid-template-columns: 1fr; }
+}
 
 /* ---------- 버튼 ---------- */
 
