@@ -69,7 +69,7 @@ body {
     font-weight: 700;
     font-size: 0.92rem;
 }
-.brand svg, .brand img { height: 34px; width: auto; display: block; }
+.brand svg { height: 30px; width: auto; display: block; }
 
 .site-nav ul {
     list-style: none;
