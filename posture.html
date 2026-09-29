@@ -70,7 +70,13 @@
         <section>
             <div class="cam-wrap">
                 <div>
-                    <canvas id="canvas"></canvas>
+                    <div class="cam-frame" id="cam-frame">
+                        <canvas id="canvas"></canvas>
+                        <div class="cam-placeholder" id="cam-placeholder">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg>
+                            <p>측정을 시작하면 이곳에 웹캠 화면이 나타나요.</p>
+                        </div>
+                    </div>
                     <div id="label-container"></div>
                 </div>
                 <div>
@@ -185,6 +191,7 @@
             canvas.width = size;
             canvas.height = size;
             ctx = canvas.getContext("2d");
+            document.getElementById('cam-placeholder').style.display = 'none';
 
             labelContainer = document.getElementById("label-container");
             labelContainer.innerHTML = '';
@@ -217,7 +224,7 @@
             if (!paused) lastTick = Date.now();
             if (paused) {
                 document.getElementById('current-status').innerText = '일시정지';
-                document.getElementById('canvas').className = '';
+                document.getElementById('cam-frame').className = 'cam-frame';
             }
         }
 
@@ -328,7 +335,7 @@
             document.getElementById('alert-count').innerText = rec.alerts;
 
             const tone = paused ? '' : (state === 'BAD' ? 'bad' : (state === 'GOOD' ? 'good' : ''));
-            document.getElementById('canvas').className = tone;
+            document.getElementById('cam-frame').className = ('cam-frame ' + tone).trim();
             document.getElementById('current-status').className = ('badge ' + tone).trim();
         }
 
